@@ -71,7 +71,7 @@ export const HomePage: React.FC = () => {
       transformOrigin: 'left center', repeat: -1,
       paused: heroPaused,
     });
-    return () => tween.kill();
+    return () => { tween.kill(); };
   }, [heroModule, heroPaused, motionReduced]);
 
   return (
