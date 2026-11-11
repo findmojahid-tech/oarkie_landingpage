@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import { ArrowRight, Play, CheckCircle2, Shield, Sparkles, FolderKanban, Users, Clock, Layers } from 'lucide-react';
 import { APP_CONFIG } from '../config/site';
 import { ProductMockup } from '../components/ui/ProductMockup';
@@ -16,6 +17,13 @@ import { Link } from 'react-router-dom';
 
 export const HomePage: React.FC = () => {
   const [demoModalOpen, setDemoModalOpen] = useState(false);
+  const reduceMotion = useReducedMotion();
+  const heroTransition = { duration: reduceMotion ? 0 : 0.65, ease: 'easeOut' as const };
+  const enterHero = (delay: number) => ({
+    initial: reduceMotion ? false : { opacity: 0, y: 24 },
+    animate: { opacity: 1, y: 0 },
+    transition: { ...heroTransition, delay: reduceMotion ? 0 : delay },
+  });
 
   return (
     <div className="bg-[#FFFFFF] text-[#141414]">
@@ -23,14 +31,14 @@ export const HomePage: React.FC = () => {
       <section className="relative pt-12 pb-20 md:pt-20 md:pb-32 bg-[#0D0D0F] text-white border-b border-[#303034] overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           {/* Hero Copy */}
-          <div className="text-center max-w-4xl mx-auto space-y-6">
+          <motion.div {...enterHero(0.08)} className="text-center max-w-4xl mx-auto space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#171719] border border-[#303034] text-xs font-mono text-[#A0A0A8]">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>ParroDash v3.4 is live</span>
+              <span>Meet the connected work platform</span>
               <span className="text-[#777780]">·</span>
-              <span className="text-white hover:underline cursor-pointer" onClick={() => setDemoModalOpen(true)}>
-                Explore What is New →
-              </span>
+              <button type="button" className="text-white hover:underline" onClick={() => setDemoModalOpen(true)}>
+                Explore the interactive demo →
+              </button>
             </div>
 
             <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.08]">
@@ -62,20 +70,18 @@ export const HomePage: React.FC = () => {
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-[#777780] pt-2">
-              <span>Free forever for up to 5 users</span>
+              <span>Projects, people and workflows in one place</span>
               <span>·</span>
-              <span>No credit card required</span>
-              <span>·</span>
-              <span>Setup takes under 2 minutes</span>
+              <span>Explore the product before choosing a plan</span>
             </div>
-          </div>
+          </motion.div>
 
           {/* Product Interface Showcase Underneath Hero */}
-          <div className="relative pt-6 max-w-6xl mx-auto">
+          <motion.div {...enterHero(0.27)} className="relative pt-6 max-w-6xl mx-auto">
             <div className="relative rounded-2xl p-1 bg-gradient-to-b from-[#303034] to-[#121214] shadow-2xl">
               <ProductMockup module="projects" interactive={true} />
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 

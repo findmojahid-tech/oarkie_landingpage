@@ -17,7 +17,7 @@ export const CTASection: React.FC = () => {
         </h2>
 
         <p className="text-base sm:text-lg text-[#A0A0A8] max-w-2xl mx-auto leading-relaxed">
-          Join thousands of high-velocity teams eliminating app fatigue. Unify your projects, people, conversations,
+          Unify your projects, people, conversations,
           and automations in ParroDash.
         </p>
 
@@ -40,13 +40,10 @@ export const CTASection: React.FC = () => {
 
         <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 pt-6 text-xs text-[#777780]">
           <span className="flex items-center gap-1.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Free Forever for up to 5 users
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Explore the interactive product demo
           </span>
           <span className="flex items-center gap-1.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" /> No credit card required
-          </span>
-          <span className="flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-zinc-400" /> SOC 2 Type II Certified
+            <ShieldCheck className="w-4 h-4 text-zinc-400" /> Talk to the team about workspace access
           </span>
         </div>
       </div>
