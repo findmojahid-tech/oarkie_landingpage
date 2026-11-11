@@ -32,6 +32,29 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenDemo }) => {
     setMobileOpen(false);
   }, [location.pathname]);
 
+  // Keep mobile navigation modal-like: prevent background scroll and allow Escape to close it.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const oldOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMobileOpen(false);
+        setExpandedMobileMenu(null);
+      }
+    };
+    window.addEventListener('keydown', onEscape);
+    return () => {
+      document.body.style.overflow = oldOverflow;
+      window.removeEventListener('keydown', onEscape);
+    };
+  }, [mobileOpen]);
+
+  // Clear hover timer when the navbar unmounts.
+  useEffect(() => () => {
+    if (menuTimeoutRef.current) clearTimeout(menuTimeoutRef.current);
+  }, []);
+
   // Handle scroll state for subtle elevation
   useEffect(() => {
     const handleScroll = () => {
@@ -115,6 +138,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenDemo }) => {
                     type="button"
                     onClick={() => setActiveMenu(activeMenu === menu.id ? null : menu.id)}
                     aria-expanded={activeMenu === menu.id}
+                    aria-haspopup="true"
                     className={`px-3 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-1 ${
                       activeMenu === menu.id || isActive
                         ? 'text-white bg-[#171719]'
@@ -169,8 +193,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenDemo }) => {
             type="button"
             onClick={() => setMobileOpen(!mobileOpen)}
             className="p-2 rounded-md text-[#A0A0A8] hover:text-white hover:bg-[#171719]"
-            aria-label="Toggle navigation menu"
+            aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
             aria-expanded={mobileOpen}
+            aria-controls="mobile-site-navigation"
           >
             {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -291,7 +316,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenDemo }) => {
 
       {/* Mobile Drawer */}
       {mobileOpen && (
-        <div className="lg:hidden fixed inset-x-0 top-16 bottom-0 bg-[#0D0D0F] border-t border-[#303034] z-50 overflow-y-auto p-4 space-y-4">
+        <div id="mobile-site-navigation" role="navigation" aria-label="Mobile navigation" className="lg:hidden fixed inset-x-0 top-16 bottom-0 bg-[#0D0D0F] border-t border-[#303034] z-50 overflow-y-auto p-4 space-y-4">
           <div className="space-y-1">
             {NAVIGATION_CONFIG.map((menu) => {
               const hasDropdown = Boolean(menu.sections && menu.sections.length > 0);
@@ -314,6 +339,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenDemo }) => {
                   <button
                     type="button"
                     onClick={() => setExpandedMobileMenu(isExpanded ? null : menu.id)}
+                    aria-expanded={isExpanded}
                     className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-semibold text-white"
                   >
                     <span>{menu.label}</span>
