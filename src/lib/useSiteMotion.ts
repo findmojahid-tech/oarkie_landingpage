@@ -6,14 +6,12 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 gsap.registerPlugin(ScrollTrigger);
 
 /**
- * Site-wide GSAP layer for the AI Studio marketing website.
+ * Motion direction: typographic storytelling, not blanket section fades.
  *
- * Animate only the top-level content blocks of each page section, rather than
- * every nested dashboard node. This avoids breaking existing React interactions,
- * responsive layout, form controls, cards and product mockups.
- *
- * Every animation and ScrollTrigger belongs to a scoped GSAP context, which
- * is reverted when React Router changes pages or unmounts the layout.
+ * The previous implementation hid entire section children (including controls and
+ * product mockups) until ScrollTrigger fired. This can cause missing content on
+ * refresh, anchor jumps and dynamic React UI. Animate specific visual elements
+ * instead; never set visibility:hidden on an entire feature section.
  */
 export function useSiteMotion(
   pageRef: RefObject<HTMLElement | null>,
@@ -23,121 +21,93 @@ export function useSiteMotion(
   useLayoutEffect(() => {
     const page = pageRef.current;
     if (!page || typeof window === 'undefined') return;
-
-    // No hidden elements, transforms, or scroll effects for motion-sensitive visitors.
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      if (progressRef.current) gsap.set(progressRef.current, { clearProps: 'all' });
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const progress = progressRef.current;
+    if (reduceMotion) {
+      if (progress) gsap.set(progress, { clearProps: 'all' });
       return;
     }
 
     const context = gsap.context(() => {
-      const sections = Array.from(page.querySelectorAll<HTMLElement>('section')).filter(
-        section => !section.parentElement?.closest('section') &&
-          !section.matches('[data-gsap-skip]'),
-      );
+      const mainContent = page.firstElementChild;
+      const sections = Array.from(page.querySelectorAll<HTMLElement>('section'))
+        .filter(el => !el.parentElement?.closest('section') && !el.matches('[data-gsap-skip]'));
 
-      const getBlocks = (section: HTMLElement): HTMLElement[] => {
-        const inner = section.querySelector<HTMLElement>(':scope > div');
-        if (!inner) return [section];
-        const blocks = Array.from(inner.children).filter(
-          (el): el is HTMLElement =>
-            el instanceof HTMLElement &&
-            !el.matches('[data-gsap-skip], script, style') &&
-            !el.closest('[data-gsap-skip]'),
-        );
-        return blocks.length ? blocks.slice(0, 48) : [inner];
-      };
-
-      // Pages such as legal, help or 404 may not use section elements.
-      // They still get a lightweight first-view entrance.
-      if (sections.length === 0 && page.firstElementChild instanceof HTMLElement) {
-        gsap.fromTo(page.firstElementChild, { autoAlpha: 0, y: 20 }, {
-          autoAlpha: 1, y: 0, duration: 0.7, ease: 'power2.out',
-          clearProps: 'transform,opacity,visibility',
-        });
-      }
-
+      // Above-the-fold: intentionally choreographed typography, actions, then
+      // the product preview. Never delay links or leave a hidden CTA.
       const first = sections[0];
       if (first) {
-        const blocks = getBlocks(first);
-        gsap.fromTo(
-          blocks,
-          { autoAlpha: 0, y: 28 },
-          {
-            autoAlpha: 1,
-            y: 0,
-            duration: 0.86,
-            stagger: 0.14,
-            ease: 'power3.out',
-            clearProps: 'transform,opacity,visibility',
-          },
-        );
+        const heading = first.querySelector<HTMLElement>('h1');
+        const description = heading?.nextElementSibling;
+        const titleWrap = heading?.parentElement;
+        const mediaWrap = first.querySelector<HTMLElement>('[data-gsap-hero-preview]') ??
+          (first.firstElementChild?.lastElementChild as HTMLElement | null);
+
+        const timeline = gsap.timeline({ defaults: { ease: 'power3.out', clearProps: 'transform,opacity' } });
+        if (heading) timeline.from(heading, { y: 24, opacity: 0, duration: 0.8 }, 0.05);
+        if (description instanceof HTMLElement) timeline.from(description, { y: 18, opacity: 0, duration: 0.65 }, 0.18);
+        if (titleWrap) {
+          const actions = titleWrap.querySelector<HTMLElement>('a[href], button');
+          if (actions && actions !== heading) timeline.from(actions, { y: 10, opacity: 0, duration: 0.48 }, 0.31);
+        }
+        if (mediaWrap && mediaWrap !== titleWrap) {
+          timeline.from(mediaWrap, { y: 24, opacity: 0, duration: 1, ease: 'power2.out' }, 0.37);
+        }
+      } else if (mainContent instanceof HTMLElement) {
+        gsap.from(mainContent, {
+          y: 12, opacity: 0, duration: 0.55, ease: 'power2.out',
+          clearProps: 'transform,opacity',
+        });
       }
 
-      // Independent ScrollTriggers ensure every major block animates at its own
-      // actual viewport position, including long sections and mobile layouts.
-      sections.slice(1).forEach(section => {
-        getBlocks(section).forEach((block, index) => {
-          gsap.fromTo(
-            block,
-            { autoAlpha: 0, y: index % 2 === 0 ? 30 : 22 },
-            {
-              autoAlpha: 1,
-              y: 0,
-              duration: 0.78,
-              ease: 'power2.out',
-              clearProps: 'transform,opacity,visibility',
-              scrollTrigger: {
-                trigger: block,
-                start: 'top 92%',
-                once: true,
-                invalidateOnRefresh: true,
-              },
-            },
-          );
-        });
-      });
-
-      // Shared footer appears on every route, including long pages and legal pages.
-      const footer = document.querySelector<HTMLElement>('footer');
-      const footerContent = footer?.querySelector<HTMLElement>(':scope > div');
-      if (footerContent) {
-        Array.from(footerContent.children).slice(0, 8).forEach(element => {
-          if (!(element instanceof HTMLElement)) return;
-          gsap.fromTo(element, { autoAlpha: 0, y: 20 }, {
-            autoAlpha: 1, y: 0, duration: 0.7, ease: 'power2.out',
-            clearProps: 'transform,opacity,visibility',
+      // Below the fold: restrained heading reveal on first entrance. No whole-
+      // section hiding, no 48-element stagger, no reveal of interactive inputs.
+      sections.slice(1).forEach((section, index) => {
+        const inner = section.firstElementChild;
+        if (!(inner instanceof HTMLElement)) return;
+        const heading = inner.querySelector<HTMLElement>('h2, h3');
+        if (heading) {
+          gsap.from(heading, {
+            y: 18, opacity: 0, duration: 0.7, ease: 'power2.out',
+            clearProps: 'transform,opacity',
             scrollTrigger: {
-              trigger: element, start: 'top 94%', once: true,
+              trigger: heading, start: 'top 93%', once: true,
+              invalidateOnRefresh: true,
+            },
+          });
+        }
+        // Individual editorial screenshots glide a few pixels into view
+        // without an opacity blackout. This keeps the UI readable at every
+        // scroll position, including screenshots and browser Back navigation.
+        const media = Array.from(inner.querySelectorAll<HTMLElement>('img, video'))
+          .filter(el => !el.closest('button, a, [role="dialog"]'))
+          .slice(0, 2);
+        media.forEach(el => {
+          gsap.from(el, {
+            y: index % 2 === 0 ? 18 : 12, duration: 0.8, ease: 'power2.out',
+            clearProps: 'transform',
+            scrollTrigger: {
+              trigger: el, start: 'top 96%', once: true,
               invalidateOnRefresh: true,
             },
           });
         });
-      }
+      });
 
-      // Small unobtrusive reading progress indicator on every marketing route.
-      if (progressRef.current) {
-        gsap.fromTo(
-          progressRef.current,
-          { scaleX: 0, transformOrigin: 'left center' },
-          {
-            scaleX: 1,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: page,
-              start: 'top top',
-              end: 'bottom bottom',
-              scrub: 0.18,
-              invalidateOnRefresh: true,
-            },
+      if (progress) {
+        gsap.fromTo(progress, { scaleX: 0 }, {
+          scaleX: 1, ease: 'none',
+          scrollTrigger: {
+            trigger: page, start: 'top top', end: 'bottom bottom',
+            scrub: 0.18, invalidateOnRefresh: true,
           },
-        );
+        });
       }
     }, page);
 
-    const refreshId = window.requestAnimationFrame(() => ScrollTrigger.refresh());
+    const frame = requestAnimationFrame(() => ScrollTrigger.refresh());
     return () => {
-      window.cancelAnimationFrame(refreshId);
+      cancelAnimationFrame(frame);
       context.revert();
     };
   }, [pageRef, progressRef, routeKey]);
