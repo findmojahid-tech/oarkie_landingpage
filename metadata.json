@@ -1,0 +1,6 @@
+{
+  "name": "ParroDash — All-in-One Work Management & Business OS",
+  "description": "One workspace. Every team. Everything connected. ParroDash brings projects, people, conversations, CRM, and AI workflows together in one unified platform.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
