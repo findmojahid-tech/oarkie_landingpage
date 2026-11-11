@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
+import gsap from 'gsap';
 import { ChevronDown } from 'lucide-react';
 
 export interface FAQItem {
@@ -51,6 +52,20 @@ export const FAQAccordion: React.FC<FAQAccordionProps> = ({
   subtitle = 'Everything you need to know about ParroDash, migrations, security, and pricing.',
 }) => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const answersRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (openIndex === null || !answersRef.current || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const answer = answersRef.current.querySelector<HTMLElement>('[data-faq-answer]');
+    if (!answer) return;
+    const context = gsap.context(() => {
+      gsap.fromTo(answer, { height: 0, autoAlpha: 0 }, {
+        height: 'auto', autoAlpha: 1, duration: 0.36, ease: 'power2.out',
+        clearProps: 'height,opacity,visibility',
+      });
+    }, answersRef);
+    return () => context.revert();
+  }, [openIndex]);
 
   const toggle = (idx: number) => {
     setOpenIndex(openIndex === idx ? null : idx);
@@ -71,7 +86,7 @@ export const FAQAccordion: React.FC<FAQAccordionProps> = ({
           </p>
         </div>
 
-        <div className="space-y-3">
+        <div ref={answersRef} className="space-y-3">
           {items.map((item, idx) => {
             const isOpen = openIndex === idx;
             return (
@@ -83,6 +98,7 @@ export const FAQAccordion: React.FC<FAQAccordionProps> = ({
                   type="button"
                   onClick={() => toggle(idx)}
                   aria-expanded={isOpen}
+                  aria-controls={`faq-answer-${idx}`}
                   className="w-full flex items-center justify-between p-5 text-left text-sm sm:text-base font-bold text-[#141414] focus-visible:ring-2 focus-visible:ring-black"
                 >
                   <span className="pr-4">{item.question}</span>
@@ -94,7 +110,7 @@ export const FAQAccordion: React.FC<FAQAccordionProps> = ({
                 </button>
 
                 {isOpen && (
-                  <div className="px-5 pb-5 text-xs sm:text-sm text-[#777780] leading-relaxed border-t border-[#E6E6E9]/50 pt-3">
+                  <div id={`faq-answer-${idx}`} data-faq-answer className="px-5 pb-5 text-xs sm:text-sm text-[#777780] leading-relaxed border-t border-[#E6E6E9]/50 pt-3">
                     {item.answer}
                   </div>
                 )}
