@@ -21,7 +21,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Scroll to top on every route transition
   useEffect(() => {
-    window.scrollTo(0, 0);
+    // Route navigation must jump immediately to the new page top; smooth
+    // scrolling is reserved for in-page anchors so it cannot animate the old
+    // page's position and interfere with GSAP ScrollTrigger refresh.
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   }, [location.pathname]);
 
   return (
