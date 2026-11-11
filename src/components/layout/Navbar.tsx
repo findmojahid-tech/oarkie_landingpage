@@ -24,7 +24,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenDemo }) => {
   const [expandedMobileMenu, setExpandedMobileMenu] = useState<string | null>(null);
   const location = useLocation();
   const navRef = useRef<HTMLElement>(null);
-  const menuTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const mobileToggleRef = useRef<HTMLButtonElement>(null);
 
   // Close menus on route change
   useEffect(() => {
@@ -41,16 +41,39 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenDemo }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleMouseEnter = (menuId: string) => {
-    if (menuTimeoutRef.current) clearTimeout(menuTimeoutRef.current);
-    setActiveMenu(menuId);
-  };
+  // Desktop menus open only on deliberate clicks, never because the cursor
+  // happens to cross the navigation bar. Close with Escape or outside click.
+  useEffect(() => {
+    if (!activeMenu && !mobileOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        if (mobileOpen) mobileToggleRef.current?.focus();
+        setActiveMenu(null);
+        setMobileOpen(false);
+        setExpandedMobileMenu(null);
+      }
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      if (!navRef.current?.contains(event.target as Node)) {
+        setActiveMenu(null);
+        setMobileOpen(false);
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('pointerdown', onPointerDown);
+    };
+  }, [activeMenu, mobileOpen]);
 
-  const handleMouseLeave = () => {
-    menuTimeoutRef.current = setTimeout(() => {
-      setActiveMenu(null);
-    }, 150);
-  };
+  // Mobile menu is a fixed drawer; do not allow the page behind it to scroll.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = previousOverflow; };
+  }, [mobileOpen]);
 
   const currentMegaMenu = NAVIGATION_CONFIG.find((m) => m.id === activeMenu && m.sections);
 
@@ -65,7 +88,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenDemo }) => {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Left: Brand Identity */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-6 min-w-0">
           <Link
             to="/"
             className="flex items-center gap-2.5 group focus-visible:ring-2 focus-visible:ring-white rounded py-1 px-0.5"
@@ -108,13 +131,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenDemo }) => {
                 <div
                   key={menu.id}
                   className="relative"
-                  onMouseEnter={() => handleMouseEnter(menu.id)}
-                  onMouseLeave={handleMouseLeave}
                 >
                   <button
                     type="button"
                     onClick={() => setActiveMenu(activeMenu === menu.id ? null : menu.id)}
                     aria-expanded={activeMenu === menu.id}
+                    aria-controls="desktop-mega-navigation"
+                    aria-haspopup="true"
                     className={`px-3 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-1 ${
                       activeMenu === menu.id || isActive
                         ? 'text-white bg-[#171719]'
@@ -167,10 +190,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenDemo }) => {
           </a>
           <button
             type="button"
-            onClick={() => setMobileOpen(!mobileOpen)}
+            ref={mobileToggleRef}
+            onClick={() => { setActiveMenu(null); setMobileOpen(!mobileOpen); }}
             className="p-2 rounded-md text-[#A0A0A8] hover:text-white hover:bg-[#171719]"
-            aria-label="Toggle navigation menu"
+            aria-label={mobileOpen ? 'Close navigation menu' : 'Open navigation menu'}
             aria-expanded={mobileOpen}
+            aria-controls="mobile-navigation-drawer"
           >
             {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -180,11 +205,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenDemo }) => {
       {/* Desktop Mega Menu Dropdown Overlay */}
       {currentMegaMenu && currentMegaMenu.sections && (
         <div
-          className="hidden lg:block absolute left-0 right-0 top-16 bg-[#0D0D0F] border-b border-[#303034] shadow-2xl transition-all duration-200"
-          onMouseEnter={() => {
-            if (menuTimeoutRef.current) clearTimeout(menuTimeoutRef.current);
-          }}
-          onMouseLeave={handleMouseLeave}
+          id="desktop-mega-navigation"
+          className="hidden lg:block absolute left-0 right-0 top-16 bg-[#0D0D0F] border-b border-[#303034] shadow-2xl max-h-[calc(100dvh-4rem)] overflow-y-auto"
         >
           <div className="max-w-7xl mx-auto px-6 py-8">
             <div className="grid grid-cols-12 gap-8">
@@ -291,7 +313,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenDemo }) => {
 
       {/* Mobile Drawer */}
       {mobileOpen && (
-        <div className="lg:hidden fixed inset-x-0 top-16 bottom-0 bg-[#0D0D0F] border-t border-[#303034] z-50 overflow-y-auto p-4 space-y-4">
+        <div id="mobile-navigation-drawer" role="navigation" aria-label="Mobile navigation" className="lg:hidden fixed inset-x-0 top-16 bottom-0 bg-[#0D0D0F] border-t border-[#303034] z-50 overflow-y-auto p-4 space-y-4">
           <div className="space-y-1">
             {NAVIGATION_CONFIG.map((menu) => {
               const hasDropdown = Boolean(menu.sections && menu.sections.length > 0);
@@ -314,6 +336,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenDemo }) => {
                   <button
                     type="button"
                     onClick={() => setExpandedMobileMenu(isExpanded ? null : menu.id)}
+                    aria-expanded={isExpanded}
                     className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-semibold text-white"
                   >
                     <span>{menu.label}</span>
