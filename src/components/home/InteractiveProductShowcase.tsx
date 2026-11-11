@@ -112,16 +112,23 @@ const TABS: ShowcaseTab[] = [
 export const InteractiveProductShowcase: React.FC = () => {
   const [activeTabId, setActiveTabId] = useState<MockupModuleType>('projects');
   const previewRef = useRef<HTMLDivElement>(null);
+  const copyRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     const preview = previewRef.current;
-    if (!preview || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const copy = copyRef.current;
+    if (!preview || !copy || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const context = gsap.context(() => {
-      gsap.fromTo(preview, { autoAlpha: 0, y: 16, scale: 0.985 }, {
-        autoAlpha: 1, y: 0, scale: 1, duration: 0.48, ease: 'power2.out',
-        clearProps: 'transform,opacity,visibility',
-      });
-    }, preview);
+      const tl = gsap.timeline();
+      tl.fromTo(copy.querySelectorAll('h3, p'), { y: 12, opacity: 0 }, {
+        y: 0, opacity: 1, stagger: 0.07, duration: 0.34,
+        ease: 'power2.out', clearProps: 'transform,opacity',
+      }, 0);
+      tl.fromTo(preview, { y: 24, opacity: 0.5, scale: 0.985 }, {
+        y: 0, opacity: 1, scale: 1, duration: 0.56, ease: 'power3.out',
+        clearProps: 'transform,opacity',
+      }, 0.08);
+    }, copy);
     return () => context.revert();
   }, [activeTabId]);
   const activeTab = TABS.find((t) => t.id === activeTabId) || TABS[0];
@@ -172,7 +179,7 @@ export const InteractiveProductShowcase: React.FC = () => {
         </div>
 
         {/* Tab Detail Banner */}
-        <div data-motion="tab-copy" className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-6 rounded-2xl bg-[#171719] border border-[#303034]">
+        <div ref={copyRef} data-motion="tab-copy" className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-6 rounded-2xl bg-[#171719] border border-[#303034]">
           <div className="space-y-1.5 max-w-2xl">
             <div className="text-[11px] uppercase tracking-wider font-mono text-[#A0A0A8]">
               {activeTab.kicker}
