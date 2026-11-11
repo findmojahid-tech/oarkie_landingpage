@@ -19,7 +19,7 @@ export const ProblemSolutionSection: React.FC = () => {
         </div>
 
         {/* Side-by-Side Comparison */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div data-motion="compare" className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Disconnected Chaos */}
           <div className="rounded-2xl p-8 bg-[#F7F7F8] border border-[#E6E6E9] space-y-6">
             <div className="flex items-center gap-2 text-rose-600 font-bold text-sm uppercase tracking-wide">
