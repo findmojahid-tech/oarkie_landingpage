@@ -23,7 +23,7 @@ export const HomePage: React.FC = () => {
       <section className="relative pt-12 pb-20 md:pt-20 md:pb-32 bg-[#0D0D0F] text-white border-b border-[#303034] overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           {/* Hero Copy */}
-          <div className="text-center max-w-4xl mx-auto space-y-6">
+          <div data-motion="hero-copy" className="text-center max-w-4xl mx-auto space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#171719] border border-[#303034] text-xs font-mono text-[#A0A0A8]">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>ParroDash v3.4 is live</span>
@@ -71,7 +71,7 @@ export const HomePage: React.FC = () => {
           </div>
 
           {/* Product Interface Showcase Underneath Hero */}
-          <div className="relative pt-6 max-w-6xl mx-auto">
+          <div data-motion="hero-product" className="relative pt-6 max-w-6xl mx-auto">
             <div className="relative rounded-2xl p-1 bg-gradient-to-b from-[#303034] to-[#121214] shadow-2xl">
               <ProductMockup module="projects" interactive={true} />
             </div>
