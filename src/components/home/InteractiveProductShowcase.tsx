@@ -172,7 +172,7 @@ export const InteractiveProductShowcase: React.FC = () => {
         </div>
 
         {/* Tab Detail Banner */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-6 rounded-2xl bg-[#171719] border border-[#303034]">
+        <div data-motion="tab-copy" className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-6 rounded-2xl bg-[#171719] border border-[#303034]">
           <div className="space-y-1.5 max-w-2xl">
             <div className="text-[11px] uppercase tracking-wider font-mono text-[#A0A0A8]">
               {activeTab.kicker}
