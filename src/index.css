@@ -41,3 +41,12 @@
 .transition-smooth {
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+/* Native smooth anchor scrolling, with correct clearance for the fixed 64px navbar.
+   Avoid GSAP ScrollSmoother/scroll-jacking: preserve trackpad, mouse and touch momentum. */
+html { scroll-behavior: smooth; scroll-padding-top: 5.25rem; }
+[id] { scroll-margin-top: 5.25rem; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { scroll-animation-duration: 0.01ms; }
+}
