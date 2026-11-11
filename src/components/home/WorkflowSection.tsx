@@ -92,7 +92,7 @@ export const WorkflowSection: React.FC = () => {
         </div>
 
         {/* Workflow Chain Stepper */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+        <div data-motion="workflow-steps" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
           {STEPS.map((step) => {
             const isCurrent = activeStep === step.id;
             return (
@@ -119,7 +119,7 @@ export const WorkflowSection: React.FC = () => {
         </div>
 
         {/* Active Stage Deep Dive Card */}
-        <div className="p-8 sm:p-10 rounded-2xl bg-[#0D0D0F] text-white border border-[#303034] shadow-2xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <div data-motion="workflow-panel" className="p-8 sm:p-10 rounded-2xl bg-[#0D0D0F] text-white border border-[#303034] shadow-2xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           <div className="lg:col-span-7 space-y-4">
             <div className="flex items-center gap-3">
               <span className="font-mono text-xs uppercase tracking-wider text-emerald-400 bg-emerald-950/60 border border-emerald-900/60 px-2.5 py-1 rounded">
