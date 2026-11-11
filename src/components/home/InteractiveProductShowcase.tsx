@@ -132,7 +132,7 @@ export const InteractiveProductShowcase: React.FC = () => {
         </div>
 
         {/* Tab Controls Bar */}
-        <div className="flex items-center justify-start sm:justify-center overflow-x-auto pb-2 gap-1.5 scrollbar-none">
+        <div role="group" aria-label="Choose a product feature" className="flex items-center justify-start sm:justify-center overflow-x-auto pb-2 gap-1.5 scrollbar-none">
           <div className="flex items-center gap-1.5 p-1.5 rounded-xl bg-[#171719] border border-[#303034]">
             {TABS.map((tab) => {
               const Icon = tab.icon;
@@ -142,6 +142,7 @@ export const InteractiveProductShowcase: React.FC = () => {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTabId(tab.id)}
+                  aria-pressed={isActive}
                   className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
                     isActive
                       ? 'bg-white text-black shadow-md'
