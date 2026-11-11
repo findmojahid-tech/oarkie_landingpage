@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
+import gsap from 'gsap';
 import {
   FolderKanban,
   CheckSquare,
@@ -110,6 +111,19 @@ const TABS: ShowcaseTab[] = [
 
 export const InteractiveProductShowcase: React.FC = () => {
   const [activeTabId, setActiveTabId] = useState<MockupModuleType>('projects');
+  const previewRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const preview = previewRef.current;
+    if (!preview || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const context = gsap.context(() => {
+      gsap.fromTo(preview, { autoAlpha: 0, y: 16, scale: 0.985 }, {
+        autoAlpha: 1, y: 0, scale: 1, duration: 0.48, ease: 'power2.out',
+        clearProps: 'transform,opacity,visibility',
+      });
+    }, preview);
+    return () => context.revert();
+  }, [activeTabId]);
   const activeTab = TABS.find((t) => t.id === activeTabId) || TABS[0];
 
   return (
@@ -132,7 +146,7 @@ export const InteractiveProductShowcase: React.FC = () => {
         </div>
 
         {/* Tab Controls Bar */}
-        <div className="flex items-center justify-start sm:justify-center overflow-x-auto pb-2 gap-1.5 scrollbar-none">
+        <div role="group" aria-label="Choose a product feature" className="flex items-center justify-start sm:justify-center overflow-x-auto pb-2 gap-1.5 scrollbar-none">
           <div className="flex items-center gap-1.5 p-1.5 rounded-xl bg-[#171719] border border-[#303034]">
             {TABS.map((tab) => {
               const Icon = tab.icon;
@@ -142,6 +156,7 @@ export const InteractiveProductShowcase: React.FC = () => {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTabId(tab.id)}
+                  aria-pressed={isActive}
                   className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
                     isActive
                       ? 'bg-white text-black shadow-md'
@@ -182,7 +197,7 @@ export const InteractiveProductShowcase: React.FC = () => {
         </div>
 
         {/* The Live Interactive Mockup Display */}
-        <div className="relative">
+        <div ref={previewRef} className="relative">
           <ProductMockup module={activeTabId} interactive={true} />
         </div>
 

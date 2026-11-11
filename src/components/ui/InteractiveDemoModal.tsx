@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
+import gsap from 'gsap';
 import { X, Play, ArrowRight, CheckCircle, Sparkles, FolderKanban, Users, Shield } from 'lucide-react';
 import { ProductMockup, MockupModuleType } from './ProductMockup';
 import { APP_CONFIG } from '../../config/site';
@@ -10,6 +11,30 @@ interface InteractiveDemoModalProps {
 
 export const InteractiveDemoModal: React.FC<InteractiveDemoModalProps> = ({ isOpen, onClose }) => {
   const [currentStep, setCurrentStep] = useState(0);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const screenRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (!isOpen || !modalRef.current || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const context = gsap.context(() => {
+      gsap.fromTo(modalRef.current, { autoAlpha: 0, y: 22, scale: 0.98 }, {
+        autoAlpha: 1, y: 0, scale: 1, duration: 0.46, ease: 'power3.out',
+        clearProps: 'transform,opacity,visibility',
+      });
+    }, modalRef);
+    return () => context.revert();
+  }, [isOpen]);
+
+  useLayoutEffect(() => {
+    if (!isOpen || !screenRef.current || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const context = gsap.context(() => {
+      gsap.fromTo(screenRef.current, { autoAlpha: 0, y: 12 }, {
+        autoAlpha: 1, y: 0, duration: 0.34, ease: 'power2.out',
+        clearProps: 'transform,opacity,visibility',
+      });
+    }, screenRef);
+    return () => context.revert();
+  }, [isOpen, currentStep]);
 
   if (!isOpen) return null;
 
@@ -48,8 +73,8 @@ export const InteractiveDemoModal: React.FC<InteractiveDemoModalProps> = ({ isOp
   const active = steps[currentStep];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-      <div className="relative w-full max-w-5xl bg-[#0D0D0F] border border-[#303034] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+      <div ref={modalRef} role="dialog" aria-modal="true" aria-label="Interactive Product Walkthrough" className="relative w-full max-w-5xl bg-[#0D0D0F] border border-[#303034] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#303034] bg-[#171719]">
           <div className="flex items-center gap-2">
@@ -76,6 +101,7 @@ export const InteractiveDemoModal: React.FC<InteractiveDemoModalProps> = ({ isOp
                 key={idx}
                 type="button"
                 onClick={() => setCurrentStep(idx)}
+                aria-pressed={currentStep === idx}
                 className={`p-3 text-left rounded-lg border transition-all text-xs ${
                   currentStep === idx
                     ? 'bg-[#171719] border-white text-white font-semibold shadow-sm'
@@ -126,7 +152,9 @@ export const InteractiveDemoModal: React.FC<InteractiveDemoModalProps> = ({ isOp
           </div>
 
           {/* Interactive Live Screen Mockup */}
-          <ProductMockup module={active.module} interactive={true} />
+          <div ref={screenRef}>
+            <ProductMockup module={active.module} interactive={true} />
+          </div>
 
           {/* Feature highlights */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
