@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import gsap from 'gsap';
 import { ArrowRight, Play, CheckCircle2, Shield, Sparkles, FolderKanban, Users, Clock, Layers } from 'lucide-react';
 import { APP_CONFIG } from '../config/site';
-import { ProductMockup } from '../components/ui/ProductMockup';
+import { ProductMockup, type MockupModuleType } from '../components/ui/ProductMockup';
 import { InteractiveDemoModal } from '../components/ui/InteractiveDemoModal';
 import { TrustSection } from '../components/home/TrustSection';
 import { ProblemSolutionSection } from '../components/home/ProblemSolutionSection';
@@ -16,6 +17,62 @@ import { Link } from 'react-router-dom';
 
 export const HomePage: React.FC = () => {
   const [demoModalOpen, setDemoModalOpen] = useState(false);
+  const [heroModule, setHeroModule] = useState<MockupModuleType>('projects');
+  const [heroPaused, setHeroPaused] = useState(false);
+  const [motionReduced, setMotionReduced] = useState(false);
+  const heroScreenRef = useRef<HTMLDivElement>(null);
+  const screenProgressRef = useRef<HTMLDivElement>(null);
+
+  const heroModules: { id: MockupModuleType; title: string; index: string }[] = [
+    { id: 'projects', title: 'Projects', index: '01' },
+    { id: 'tasks', title: 'Tasks', index: '02' },
+    { id: 'dashboards', title: 'Dashboards', index: '03' },
+    { id: 'calendar', title: 'Calendar', index: '04' },
+  ];
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const sync = () => setMotionReduced(media.matches);
+    sync();
+    media.addEventListener('change', sync);
+    return () => media.removeEventListener('change', sync);
+  }, []);
+
+  // Auto-play a genuine product walkthrough. Pause when a visitor interacts
+  // with the mockup; reduced-motion visitors control it manually.
+  useEffect(() => {
+    if (heroPaused || motionReduced) return;
+    const timer = window.setInterval(() => {
+      setHeroModule(current => {
+        const at = heroModules.findIndex(item => item.id === current);
+        return heroModules[(at + 1) % heroModules.length].id;
+      });
+    }, 4800);
+    return () => window.clearInterval(timer);
+  }, [heroPaused, motionReduced]);
+
+  useLayoutEffect(() => {
+    const screen = heroScreenRef.current;
+    if (!screen || motionReduced) return;
+    const ctx = gsap.context(() => {
+      gsap.fromTo(screen, { opacity: 0.25, y: 12, scale: 0.988 }, {
+        opacity: 1, y: 0, scale: 1, duration: 0.75,
+        ease: 'power3.out', clearProps: 'opacity,transform',
+      });
+    }, screen);
+    return () => ctx.revert();
+  }, [heroModule, motionReduced]);
+
+  useLayoutEffect(() => {
+    const bar = screenProgressRef.current;
+    if (!bar || motionReduced) return;
+    const tween = gsap.fromTo(bar, { scaleX: 0 }, {
+      scaleX: 1, duration: 4.8, ease: 'none',
+      transformOrigin: 'left center', repeat: -1,
+      paused: heroPaused,
+    });
+    return () => { tween.kill(); };
+  }, [heroModule, heroPaused, motionReduced]);
 
   return (
     <div className="bg-[#FFFFFF] text-[#141414]">
@@ -72,8 +129,48 @@ export const HomePage: React.FC = () => {
 
           {/* Product Interface Showcase Underneath Hero */}
           <div data-motion="hero-product" className="relative pt-6 max-w-6xl mx-auto">
-            <div className="relative rounded-2xl p-1 bg-gradient-to-b from-[#303034] to-[#121214] shadow-2xl">
-              <ProductMockup module="projects" interactive={true} />
+            <div className="flex flex-col sm:flex-row gap-3 sm:items-end sm:justify-between mb-3">
+              <div>
+                <div className="text-[10px] tracking-[0.2em] uppercase text-[#777780] font-mono">Inside the workspace</div>
+                <div className="text-sm sm:text-base font-semibold text-white mt-1">See real workflows, not a static screenshot.</div>
+              </div>
+              <div role="group" aria-label="Select product preview" className="flex items-center gap-1 p-1 rounded-xl bg-[#171719] border border-[#303034] overflow-x-auto max-w-full">
+                {heroModules.map(item => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    aria-pressed={heroModule === item.id}
+                    onClick={() => { setHeroModule(item.id); setHeroPaused(true); }}
+                    className={`shrink-0 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${heroModule === item.id
+                      ? 'bg-white text-black'
+                      : 'text-[#A0A0A8] hover:bg-[#28282d] hover:text-white'}`}
+                  >
+                    <span className="opacity-60 font-mono mr-1">{item.index}</span> {item.title}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div
+              onMouseEnter={() => setHeroPaused(true)}
+              onMouseLeave={() => setHeroPaused(false)}
+              onFocusCapture={() => setHeroPaused(true)}
+              onBlurCapture={event => {
+                if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setHeroPaused(false);
+              }}
+              className="relative rounded-2xl p-1 bg-[#202025] border border-[#303034] shadow-2xl overflow-hidden"
+            >
+              <div ref={screenProgressRef} aria-hidden="true" className="absolute top-0 inset-x-0 h-[2px] bg-white/75 z-10 origin-left" />
+              <div ref={heroScreenRef} aria-live="off">
+                <ProductMockup key={heroModule} module={heroModule} interactive={true} />
+              </div>
+            </div>
+            <div className="flex justify-between gap-4 items-center mt-3 text-[11px] text-[#777780]">
+              <span>Live interactive product demonstration</span>
+              <button type="button" onClick={() => setHeroPaused(v => !v)}
+                aria-label={heroPaused ? 'Resume automatic previews' : 'Pause automatic previews'}
+                className="hover:text-white underline underline-offset-4">
+                {heroPaused ? 'Play walkthrough' : 'Pause walkthrough'}
+              </button>
             </div>
           </div>
         </div>
