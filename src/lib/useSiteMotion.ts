@@ -48,6 +48,15 @@ export function useSiteMotion(
         return blocks.length ? blocks.slice(0, 48) : [inner];
       };
 
+      // Pages such as legal, help or 404 may not use section elements.
+      // They still get a lightweight first-view entrance.
+      if (sections.length === 0 && page.firstElementChild instanceof HTMLElement) {
+        gsap.fromTo(page.firstElementChild, { autoAlpha: 0, y: 20 }, {
+          autoAlpha: 1, y: 0, duration: 0.7, ease: 'power2.out',
+          clearProps: 'transform,opacity,visibility',
+        });
+      }
+
       const first = sections[0];
       if (first) {
         const blocks = getBlocks(first);
@@ -88,6 +97,23 @@ export function useSiteMotion(
           );
         });
       });
+
+      // Shared footer appears on every route, including long pages and legal pages.
+      const footer = document.querySelector<HTMLElement>('footer');
+      const footerContent = footer?.querySelector<HTMLElement>(':scope > div');
+      if (footerContent) {
+        Array.from(footerContent.children).slice(0, 8).forEach(element => {
+          if (!(element instanceof HTMLElement)) return;
+          gsap.fromTo(element, { autoAlpha: 0, y: 20 }, {
+            autoAlpha: 1, y: 0, duration: 0.7, ease: 'power2.out',
+            clearProps: 'transform,opacity,visibility',
+            scrollTrigger: {
+              trigger: element, start: 'top 94%', once: true,
+              invalidateOnRefresh: true,
+            },
+          });
+        });
+      }
 
       // Small unobtrusive reading progress indicator on every marketing route.
       if (progressRef.current) {
